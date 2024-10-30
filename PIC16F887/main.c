@@ -1,5 +1,7 @@
 // Configuración y juego de adivinanza para el PIC16F887 en MikroC for PIC
 
+unsigned short numSelec = 0;
+
 void Tone1() {
   Sound_Play(659, 250);   // Frecuencia = 659Hz, duración = 250ms
 }
@@ -46,57 +48,66 @@ void main() {
   ANSELH = 0;
   C1ON_bit = 0;                // Desactiva comparadores
   C2ON_bit = 0;
-  
+
   TRISB  = 0xFF;               // Configura RB como entrada para botones
   TRISA  = 0xFF;               // Configura RA como entrada para botones
-  TRISC  = 0x00;               // RC como salida para comunicación y melodías
-  TRISD  = 0x00;               // RD como salida para comunicación con ATmega328P
+  TRISC  = 0x00;               // RC como salida para melodías
+  TRISD  = 0x60;               // RD como salida (menos RD5 y RD6) para comunicación con ATmega328P
 
   Sound_Init(&PORTC, 3);       // Inicializa sonido en RC3
-  int numero_seleccionado = 0;
-  int numero_aleatorio = 0;
-
+  
   // Espera hasta que se presione el botón de inicio en RB7
   while (Button(&PORTB, 7, 1, 1) == 0) {
     PORTD = 0x00;              // En espera, envía 0 por RD
   }
   
-  // Inicia el juego, envía 1 al ATmega328P
+  // Inicia el juego, envía 1 al ATmega328P para indicar inicio
   PORTD = 0x01;
-  while (Button(&PORTB, 7, 1, 1) == 1); // Espera a que se suelte el botón
 
-  // Detectar botón de selección de número
-  if (Button(&PORTA, 0, 1, 1)) numero_seleccionado = 1;
-  else if (Button(&PORTA, 1, 1, 1)) numero_seleccionado = 2;
-  else if (Button(&PORTB, 0, 1, 1)) numero_seleccionado = 3;
-  else if (Button(&PORTB, 1, 1, 1)) numero_seleccionado = 4;
-  else if (Button(&PORTB, 2, 1, 1)) numero_seleccionado = 5;
-  else if (Button(&PORTB, 3, 1, 1)) numero_seleccionado = 6;
-  else if (Button(&PORTB, 4, 1, 1)) numero_seleccionado = 7;
-  else if (Button(&PORTB, 5, 1, 1)) numero_seleccionado = 8;
-  else if (Button(&PORTB, 6, 1, 1)) numero_seleccionado = 9;
-  
-  // Espera a que se suelte el botón de selección
-  while (PORTA.F0 == 0 || PORTA.F1 == 0 || PORTB.F0 == 0 || PORTB.F1 == 0 ||
-         PORTB.F2 == 0 || PORTB.F3 == 0 || PORTB.F4 == 0 || PORTB.F5 == 0 || PORTB.F6 == 0);
+  while(1){
+    // Detectar botón de selección de número
+    if (Button(&PORTA, 0, 1, 1))
+       numSelec = 1;
+    while(RA0_bit);
 
-  // Genera número aleatorio entre 1 y 9
-  numero_aleatorio = (rand() % 9) + 1;
+    if (Button(&PORTA, 1, 1, 1))
+         numSelec = 2;
+    while(RA1_bit);
 
-  // Comparación de números y reacción
-  if (numero_seleccionado == numero_aleatorio) {
-    // Jugador ganó
-    PORTC.F0 = 1;               // Enviar valor 2 (RC0=1 y RC1=0)
-    PORTC.F1 = 0;
-    Melody_Win();               // Reproducir melodía de victoria
-  } else {
-    // Jugador perdió
-    PORTC.F0 = 1;               // Enviar valor 3 (RC0=1 y RC1=1)
-    PORTC.F1 = 1;
-    Melody_Lose();              // Reproducir melodía de derrota
+    if (Button(&PORTB, 0, 1, 1))
+         numSelec = 3;
+    while(RB0_bit);
+
+    if (Button(&PORTB, 1, 1, 1))
+         numSelec = 4;
+    while(RB1_bit);
+
+    if (Button(&PORTB, 2, 1, 1))
+       numSelec = 5;
+    while(RB2_bit);
+
+    if (Button(&PORTB, 3, 1, 1))
+       numSelec = 6;
+    while(RB3_bit);
+
+    if (Button(&PORTB, 4, 1, 1))
+       numSelec = 7;
+    while(RB4_bit);
+
+    if (Button(&PORTB, 5, 1, 1))
+       numSelec = 8;
+    while(RB5_bit);
+
+    if (Button(&PORTB, 6, 1, 1))
+       numSelec = 9;
+    while(RB6_bit);
+
+    // Enviar el número seleccionado por RD2-RD5 sin afectar RD0 y RD1
+    PORTD = (PORTD & 0x01) | (numSelec << 1);
+    
+    if (RD5_bit && RD6_bit)
+       Melody_Win();               // Reproducir melodía de victoria
+    if ((RD5_bit == 0) && RD6_bit)
+       Melody_Lose();              // Reproducir melodía de derrota
   }
-
-  // Enviar el número seleccionado por RC2-RC5
-  PORTC = (PORTC & 0x03) | (numero_seleccionado << 2);
 }
-
