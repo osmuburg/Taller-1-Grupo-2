@@ -1,6 +1,6 @@
 /*Juego de adivinanza para el
   PIC16F887 en MikroC for PIC*/
-  
+
 unsigned short numSelec = 0;
 unsigned short randomNumber = 1;
 
@@ -117,62 +117,29 @@ void main() {
 
   Sound_Init(&PORTC, 3);       // Inicializa sonido en RC3
   srand(1);  // Semilla usando el valor de 1
-  
-  // Espera hasta que se presione el botón de inicio en RB7
-  while (Button(&PORTB, 7, 1, 1) == 0) {
-    PORTD = 0x00;              // En espera, envía 0 por RD
-  }
-  
-  // Inicia el juego, envía 1 al ATmega328P para indicar inicio
-  PORTD = 0x01;
 
   while(1){
     // Genera un número aleatorio entre 1 y 9
     randomNumber = 1 + rand() % 9;
 
     // Detectar botón de selección de número
-    if (Button(&PORTA, 0, 1, 1))
-       numSelec = 1;
-    while(RA0_bit);
-
-    if (Button(&PORTA, 1, 1, 1))
-         numSelec = 2;
-    while(RA1_bit);
-
-    if (Button(&PORTB, 0, 1, 1))
-         numSelec = 3;
-    while(RB0_bit);
-
-    if (Button(&PORTB, 1, 1, 1))
-         numSelec = 4;
-    while(RB1_bit);
-
-    if (Button(&PORTB, 2, 1, 1))
-       numSelec = 5;
-    while(RB2_bit);
-
-    if (Button(&PORTB, 3, 1, 1))
-       numSelec = 6;
-    while(RB3_bit);
-
-    if (Button(&PORTB, 4, 1, 1))
-       numSelec = 7;
-    while(RB4_bit);
-
-    if (Button(&PORTB, 5, 1, 1))
-       numSelec = 8;
-    while(RB5_bit);
-
-    if (Button(&PORTB, 6, 1, 1))
-       numSelec = 9;
-    while(RB6_bit);
-
+    if (Button(&PORTA, 0, 1, 1)) numSelec = 1;
+    else if (Button(&PORTA, 1, 1, 1)) numSelec = 2;
+    else if (Button(&PORTB, 0, 1, 1)) numSelec = 3;
+    else if (Button(&PORTB, 1, 1, 1)) numSelec = 4;
+    else if (Button(&PORTB, 2, 1, 1)) numSelec = 5;
+    else if (Button(&PORTB, 3, 1, 1)) numSelec = 6;
+    else if (Button(&PORTB, 4, 1, 1)) numSelec = 7;
+    else if (Button(&PORTB, 5, 1, 1)) numSelec = 8;
+    else if (Button(&PORTB, 6, 1, 1)) numSelec = 9;
+    else numSelec = 0;
+    
     // Enviar el número seleccionado por RD2-RD5 sin afectar RD0 y RD1
     PORTD = (PORTD & 0x01) | (numSelec << 1);
-    
+
     // Mostrar el número aleatorio en binario en RC4-RC7
     PORTC = (PORTC & 0x0F) | (randomNumber << 4);
-    
+
     if (numSelec == randomNumber && RD5_bit == 0) {
        PORTD |= (1 << 5);
        numSelec = 0;
