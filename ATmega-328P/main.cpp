@@ -8,11 +8,12 @@
 
 // Arreglos para mensajes
 unsigned char signo[8] = {0x0, 0x04, 0x02, 0x01, 0xB1, 0x0A, 0x04, 0x0}; // Mensaje "?"
-unsigned char CARA_FELIZ[8] = {0x10, 0x20, 0x4C, 0x40, 0x40, 0x4C, 0x20, 0x10}; // Cara feliz ":)"
-unsigned char EMPECEMOS[72] = { // Mensaje "EMPECEMOS"
+unsigned char PERDER[8] = {0x81, 0xC3, 0x66, 0x18, 0x18, 0x66, 0xC3, 0x81}; // "X"
+unsigned char EMPECEMOS[80] = { // Mensaje "EMPECEMOS"
     0x0, 0x7E, 0x7E, 0x5A, 0x5A, 0x5A, 0x5A, 0x0, // E
     0x0, 0x7E, 0x04, 0x08, 0x08, 0x04, 0x7E, 0x0, // M
     0x0, 0x7E, 0x7E, 0x12, 0x12, 0x1E, 0x1E, 0x0, // P
+    0x0, 0x7E, 0x7E, 0x5A, 0x5A, 0x5A, 0x5A, 0x0, // E
     0x0, 0x7E, 0x7E, 0x42, 0x42, 0x42, 0x42, 0x0, // C
     0x0, 0x7E, 0x7E, 0x5A, 0x5A, 0x5A, 0x5A, 0x0, // E
     0x0, 0x7E, 0x04, 0x08, 0x08, 0x04, 0x7E, 0x0, // M
@@ -72,18 +73,18 @@ int main(void) {
     PORTC = 0x00; // Desactivar pull-ups en PORTC
 
     // Mostrar mensaje "EMPECEMOS" y "?"
-    mostrarMatriz(72, EMPECEMOS);
+    mostrarMatriz(80, EMPECEMOS);
     mostrarMatriz(8, signo);
     
     // Inicializamos el PIC con START_PIC (PC0) con el valor de 1
     PORTC |= (1 << START_PIC);
 
     while (1) {
+        // Si RD5_PIN es 1, mostrar número y cara feliz
+        unsigned char numero = binarioADecimal();
+
         // Leer el valor de RD5_PIN (PC5) del PIC
         if (PINC & (1 << RD5_PIN)) {
-
-            // Si RD5_PIN es 1, mostrar número y cara feliz
-            unsigned char numero = binarioADecimal();
             switch (numero) {
                 case 1:
                     mostrarMatriz(8, uno); // Mostrar el 1
@@ -95,7 +96,6 @@ int main(void) {
 
                 case 3:
                     mostrarMatriz(8, tres); // Mostrar el 3
-                    mostrarMatriz(8, CARA_FELIZ); // Mostrar cara feliz
                     break;
                 
                 case 4:
@@ -127,9 +127,9 @@ int main(void) {
                     PORTD = 0x00;  // Apagar todas las filas
                     break;
             }
-        } else { // Si RD5_PIN es 0, mantener el signo "?"
-            mostrarMatriz(8, signo);
         }
+        else if (!(PINC & (1 << RD5_PIN)) && numero != 0) mostrarMatriz(8, PERDER);
+        else mostrarMatriz(8, signo); // Si RD5_PIN es 0, mantener el signo "?"
     }
     return 0;
 }
